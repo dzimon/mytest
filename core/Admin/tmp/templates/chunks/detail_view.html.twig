@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="row">
+        <form class="col s12" method="post">
+            {{ filter|raw }}
+            {% for name, array in fieldset %}
+            <ul class="collapsible popout" data-collapsible="accordion">
+                <li class="active">
+                    <div class="collapsible-header active"><i class="material-icons">arrow_drop_down_circle</i>{{ name }}</div>
+                    <div class="collapsible-body">
+                        <div class="section form_fieldset">
+                        {% for field_name, field_val  in array %}
+                            {% set field_type = '' %}
+                            {% if field_val in widgets %}
+                                {% for key, val in widgets %}
+                                    {% if field_val == val %}
+                                        {% if key == 'number' %}
+                                            {% set field_input = '<input id="' ~ field_val~'" type="number"
+                                           value="' ~ dataset[field_val] ~ '" class="validate">' %}
+                                        {% elseif key == 'datatype' %}
+                                            {% set field_input = '<input id="' ~ field_val~'" type="date"
+                                           value="' ~ dataset[field_val] ~ '" class="datepicker">' %}
+                                        {% elseif key == 'textarea' %}
+                                            {% set field_input = '<textarea id="' ~ field_val~'" value="'
+                                            ~ dataset[field_val] ~ '" class="materialize-textarea"></textarea>' %}
+                                        {% elseif key == 'select' %}
+                                            {% set field_input = '<select id="' ~ field_val~'">
+                                    <option value="' ~ dataset[field_val] ~ '" selected>' ~ dataset[field_val] ~ '</option>
+                                    </select>' %}
+                                        {% else %}
+                                            {% set field_input = '<input id="' ~ field_val~'" type="text"
+                                           value="' ~ dataset[field_val] ~ '" class="validate" required>' %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {% set field_input = '<input id="' ~ field_val~'" type="text"
+                                           value="' ~ dataset[field_val] ~ '" class="validate">' %}
+                            {% endif %}
+                            {% if loop.index is odd %}
+                                <div class="row">
+                                <div class="input-field col s6">
+                                <i class="material-icons prefix tooltipped"
+                                   data-position="bottom" data-delay="50"
+                                   data-tooltip="Поле не можетбыть пустым">info_outline</i>
+                                {% if field_val in dataset|keys %}
+                                    {{ field_input|raw }}
+                                    <label for="{{ field_val }}">{{ field_name }}</label>
+                                {% endif %}
+                            {% endif %}
+                            {% if loop.index is even %}
+                                </div>
+                                <div class="input-field col s6">
+                                    <i class="material-icons prefix tooltipped"
+                                       data-position="bottom" data-delay="50"
+                                       data-tooltip="Поле не можетбыть пустым">info_outline</i>
+                                    {% if field_val in dataset|keys %}
+                                        {{ field_input|raw }}
+                                        <label for="{{ field_val }}">{{ field_name }}</label>
+                                    {% endif %}
+                                </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            {% endfor %}
+        </form>
+    </div>
+{% endblock %}

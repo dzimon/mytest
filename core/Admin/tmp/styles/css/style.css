@@ -1,0 +1,39 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	margin: 0;
+}
+main {
+	padding-left: 235px;
+}
+main {
+	flex: 1;
+	padding: 25px 0 0 100px;
+}
+
+ul#side-nav {
+	top: 65px;
+}
+.badges {
+	border-radius: 50%;
+	position: relative;
+	top: -80px;
+	margin: -15px -15px;
+}
+.form_fieldset {
+	padding: 1rem 2rem;
+}
+
+select.select-filter {
+	display: block !important;
+	min-height: 150px;
+}
+
+.choice-group {
+	margin-top: 60px;
+}

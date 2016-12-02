@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <table class="responsive-table highlight centered">
+        <thead>
+        <tr>
+            {% for name, value in table %}
+                <th data-field="{{ name }}">{{ name }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+
+        <tbody>
+            {% for data in dataset %}
+                <tr>
+                {% for key, value in data %}
+                    {% if key in table %}
+                        {% if key == meta.link %}
+                            <td><a href="{{ data.id }}/">{{ value }}</a></td>
+                            {% else %}
+                                <td>{{ value }}</td>
+                        {% endif %}
+
+                    {% endif %}
+                {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,0 +1,5 @@
+<ul id="side-nav" class="side-nav fixed grey darken-2">
+    {% for model in models %}
+        <li><a class="white-text" href="{{ model.url }}">{{ model.name }}</a></li>
+    {% endfor %}
+</ul>

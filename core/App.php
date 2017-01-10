@@ -11,6 +11,7 @@ class App
 	public static function init()
 	{
 		Config::init();
+		(new Session())->start();
 	}
 
 	public static function run()

@@ -10,7 +10,7 @@ class Router
 	protected static $route = [];
 	protected static $abs_url;
 	private static $admin = true;
-	private static $admin_url;
+	public static $admin_url;
 
 	public static function setUrls(array $urls = null)
 	{
@@ -76,12 +76,11 @@ class Router
 		if (self::match($url)) {
 			$app = explode('/', $url);
 			if ($app[0] != self::$admin_url || self::$admin === false) {
-				if (is_dir(APP_DIR . '\\' . ucfirst($app[0]))) {
+				if (is_dir(APP_DIR . '\\' . ucfirst($app[0])) && !empty($app[0])) {
 					$controller = 'app\\' . ucfirst($app[0]) . '\controllers\\' .
 						self::formatClassName(self::$route['controller']);
 				} else {
-					$controller = 'app' . '\controllers\\' .
-						self::formatClassName(self::$route['controller']);
+					$controller = 'app\\' . self::formatClassName(self::$route['controller']);
 				}
 				if (class_exists($controller)) {
 					(new $controller)->{self::$route['action']}();

@@ -4,7 +4,7 @@
 namespace core;
 
 
-abstract class Model
+abstract class Model extends Query
 {
 	const TABLE = 'undefined';
 
@@ -14,7 +14,7 @@ abstract class Model
 
 	public function __construct()
 	{
-		$this->db = DB::connect();
+		parent::__construct();
 	}
 
 	/**
@@ -27,7 +27,7 @@ abstract class Model
 		}
 
 		$result = $this->db->query($sql);
-		return $result->fetch(\PDO::FETCH_ASSOC) ? : [];
+		return $result->fetch() ? : [];
 	}
 
 	/**
@@ -37,7 +37,7 @@ abstract class Model
 	{
 		$sql = "SELECT * FROM " . static::TABLE;
 		$result = $this->db->query($sql);
-		return $result->fetchAll(\PDO::FETCH_ASSOC) ? : [];
+		return $result->fetchAll() ? : [];
 	}
 
 	/**
@@ -50,7 +50,8 @@ abstract class Model
 			$sql = "SELECT * FROM " . static::TABLE . " WHERE $k = $v";
 		}
 		$res = $this->db->query($sql);
-		$result = $res->fetch(\PDO::FETCH_ASSOC);
+//		$res = $this->db->execute($sql);
+		$result = $res->fetch();
 		if ($result) {
 			return $result;
 		} else {
@@ -65,6 +66,7 @@ abstract class Model
 	 */
 	public function delete(array $args = [])
 	{
+		$sql = '';
 		foreach ($args as $k => $v) {
 			$sql = "DELETE FROM ". static::TABLE ." WHERE $k = $v";
 		}
@@ -83,6 +85,25 @@ abstract class Model
 		return $res->fetchAll() ? : false;
 	}
 
-
+	public function getAbsUrl($param = null)
+	{
+		$schema = Config::$schema;
+		$get = $param;
+		if (explode('/', $_SERVER['REQUEST_URI'])[1] == Router::$admin_url){
+			$url = Router::$admin_url;
+			$model = explode('/', $_SERVER['REQUEST_URI'])[2];
+			$abs_url = $schema . '://' . $_SERVER['HTTP_HOST'] . '/' . $url . '/' . $model . '/';
+			if ($get) {
+				$abs_url .= trim($get, '/') . '/';
+			}
+		} else {
+			$model = explode('/', $_SERVER['REQUEST_URI'])[1];
+			$abs_url = $schema . '://' . $_SERVER['HTTP_HOST'] . '/' . $model . '/';
+			if ($get) {
+				$abs_url .= trim($get, '/') . '/';
+			}
+		}
+		return $abs_url;
+	}
 
 }

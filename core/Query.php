@@ -9,6 +9,7 @@ class Query
 
 	protected $sql = '';
 	protected $table;
+	protected $db;
 	private $operators = [
 		'exact' => '=',
 		'iexact' => 'LIKE',
@@ -33,11 +34,6 @@ class Query
 		$this->db = DB::connect();
 	}
 
-	public function __toString()
-	{
-		return $this->query();
-	}
-
 	/**
 	 * @param null $args
 	 * @return $this
@@ -48,7 +44,7 @@ class Query
 		if ($args === null) {
 			$args = '*';
 		}
-		$this->sql .= is_array($args)? implode(',', $args): $args;
+		$this->sql .= is_array($args) ? implode(',', $args) : $args;
 		return $this;
 	}
 
@@ -59,47 +55,108 @@ class Query
 	public function from($table = '')
 	{
 		if (is_string($table)) {
-			$this->table = $table;
-			$this->sql .= ' FROM ' . $this->table;
+			$this->sql .= ' FROM ' . $table;
 		} else {
 			return false;
 		}
 		return $this;
 	}
 
-	public function where()
+	public function where($args = null, $op = '=')
 	{
-		return $this;
-	}
-
-	public function insert()
-	{
-		$this->sql = "INSERT INTO ";
-		return $this;
-	}
-
-	public function update()
-	{
-		$this->sql = "UPDATE ";
-		return $this;
-	}
-
-	public function delete(array $params=[])
-	{
-		$this->sql .= "DELETE " . $this->table . " WHERE ";
-		foreach ($params as $k => $v){
-			$this->sql .= $k . '=' .$v;
+		$this->sql .= " WHERE ";
+		if ($args && !empty($args)){
+			foreach ($args as $arg => $param){
+				$this->sql .= $arg . " " . $op . " " . ":" . $arg;
+			}
 		}
 		return $this;
 	}
 
-	public function query($fetch = 'fetchAll', $result_arr = 'FETCH_ASSOC')
+	public function limit($offset = null, $count = null)
 	{
-		var_dump($this->sql);
-		$res = $this->db->query($this->sql);
-		$result = $res->fetchAll(\PDO::FETCH_ASSOC);
-		var_dump($result);
-		return $this->sql;
+		$sql = " LIMIT ";
+		if ($offset && is_numeric($offset)) {
+			$sql .= (int)$offset . ", ";
+		}
+		if ($count && is_numeric($offset)) {
+			$sql .= (int)$count;
+		}
+		$this->sql .= $sql;
+		return $this;
+	}
+
+	public function insert(array $fields)
+	{
+		$this->sql = "INSERT INTO " . static::TABLE;
+		$count = 0;
+		$fds_str = '';
+		$val_str = '';
+		foreach ($fields as $field => $value){
+			$count++;
+			if ($field == 'csrf_token' || $field == '_save' || $field == '_save_exit'){
+				continue;
+			}
+			if (!empty($value)){
+				$fds_str .= $field ;
+				$val_str .= "'" . $value . "'";
+			}
+			if ($count < count($fields)){
+				$fds_str .= (!empty($value)) ? "," : null;
+				$val_str .= (!empty($value)) ? "," : null;
+			}
+		}
+		$fds_str = rtrim($fds_str, ',');
+		$val_str = rtrim($val_str, ',');
+		$this->sql .= " (" . $fds_str . ")" . " VALUES (" . $val_str . ")";
+		return $this;
+	}
+
+	public function execute(array $args = null)
+	{
+		try {
+			$stmt = $this->db->prepare($this->sql);
+			$stmt->execute($args);
+			return true;
+		} catch (\PDOException $e) {
+			echo 'Ошибка выполнения запроса. Причина: ' . $e->getMessage();
+			exit;
+		}
+	}
+
+
+	public function update(array $params = [])
+	{
+		$this->sql = "UPDATE " . static::TABLE . " SET ";
+		$count = 1;
+		foreach ($params as $field => $val) {
+			$value = (is_string($val)) ? "'" . $val . "'" : $val;
+			$this->sql .= $field . "=" . $value;
+			if ($count < count($params)) {
+				$this->sql .= " , ";
+			}
+			$count++;
+		}
+		return $this;
+	}
+
+	public function delete(array $params = [])
+	{
+		$this->sql .= "DELETE FROM " . static::TABLE . " WHERE ";
+		foreach ($params as $k => $v) {
+			$this->sql .= $k . '=' . $v;
+		}
+		return $this;
+	}
+
+	public function query($sql = '')
+	{
+		if (empty($sql)) {
+			$sql = $this->sql;
+		}
+		$stmt = $this->db->query($sql);
+		$result = $stmt->fetchAll();
+		return $result;
 	}
 
 	public function filter(array $args = [])
@@ -113,53 +170,39 @@ class Query
 					['value' => $v]) : [$k, 'exact', 'value' => $v];
 				if (isset($this->operators[$data[1]])) {
 					$this->sql .= ' ' . $data[0] . ' ' . $this->operators[$data[1]] . ' ';
-					switch ($data[1]){
+					switch ($data[1]) {
 						case 'contains':
-							$this->sql .= "'%" . $v ."%'";
+							$this->sql .= "'%" . $v . "%'";
 							break;
 						case 'starts':
-							$this->sql .= "'" . $v ."%'";
+							$this->sql .= "'" . $v . "%'";
 							break;
 						case 'ends':
-							$this->sql .= "'%" . $v ."'";
+							$this->sql .= "'%" . $v . "'";
 							break;
 						case 'in':
-							$this->sql .= (is_array($v)) ? "(" . implode(',', $v) .")": '()';
+							$this->sql .= (is_array($v)) ? "(" . implode(',', $v) . ")" : '()';
 							break;
 						case 'range':
 							$c = 0;
 							if (is_array($v)) {
 								foreach ($v as $item) {
 									$c++;
-									$this->sql .= ($c <=1 )? "'" . $item . "' AND " : "'" . $item . "'";
+									$this->sql .= ($c <= 1) ? "'" . $item . "' AND " : "'" . $item . "'";
 								}
 							}
 							break;
 						default:
-							$this->sql .= (is_string($v)) ? "'" . $v ."'": $v;
+							$this->sql .= (is_string($v)) ? "'" . $v . "'" : $v;
 					}
-					if (count($args) > 1 && count($args) !== $i){
+					if (count($args) > 1 && count($args) !== $i) {
 						$this->sql .= ' AND';
 					}
 				}
 			}
 		}
-		$this->sql = (substr($this->sql, -3) === 'AND')? rtrim(substr($this->sql,0, -3)): $this->sql;
+		$this->sql = (substr($this->sql, -3) === 'AND') ? rtrim(substr($this->sql, 0, -3)) : $this->sql;
 		return $this;
 	}
-
-
-	public function raw($sql)
-	{
-		if (is_string($sql)) {
-			$res = $this->stmt->query($sql);
-			$result = $res->fetchAll(\PDO::FETCH_ASSOC);
-			if ($result) {
-				return $result;
-			}
-		}
-		return true;
-	}
-
 
 }

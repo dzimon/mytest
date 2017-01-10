@@ -20,4 +20,9 @@ class Response
 		$view->render($template);
 		exit;
 	}
+
+	public static function redirect($url)
+	{
+		header('Location: ' . $url);
+	}
 }

@@ -6,6 +6,7 @@ namespace core\Admin;
 
 //use app\Shop\models\ShopModel;
 //use app\Users\models\UserModel;
+use app\Users\models\UserModel;
 use core\Config;
 use core\Exception;
 use core\Model;
@@ -20,8 +21,8 @@ class Admin extends Model
 {
 	public static $models = [];
 	public static $model;
-
 	public static $meta = [];
+	public static $model_scheme = [];
 
 
 	public static function register(Model $model = null, array $meta = [])
@@ -49,23 +50,39 @@ class Admin extends Model
 		$view = new View(__DIR__ . '/tmp');
 		$view->render('templates/chunks/dashboard.twig', [
 			'models' => self::$models,
-			'form' => Form::outerHtml(),
+			'site_name' => Config::getSettings()['global']['site_name'],
 		]);
 	}
 
 	public static function listView()
 	{
-		self::$model = self::getModel($_REQUEST);
+		$model = self::getModel($_SERVER['REQUEST_URI']);
 		$key = explode('/', array_keys($_REQUEST)[0]);
 		self::$meta = self::$models[$key[1]]['meta'];
-		$view = new View(__DIR__ . '/tmp');
+		$table = [];
+		if (empty(self::$meta['lists']['fields'])) {
+			foreach ($model->getTableScheme() as $item => $value) {
+				$table[ucwords(implode(' ', explode('_', $value['Field'])))] = $value['Field'];
+			}
+		} else {
+			$table = self::$meta['lists']['fields'];
+		}
 		$context = [
-			'table'=>(isset(self::$meta['lists']))? self::$meta['lists']['fields']: [],
+			'table'=> $table,
 			'meta'=> (isset(self::$meta['lists']['meta']))? self::$meta['lists']['meta'] : [],
-			'dataset'=>(isset(self::$model->all()[0]))? self::$model->all() : [],
+			'dataset'=> (isset($model->all()[0]))? $model->all() : [],
 			'site_name' => Config::getSettings()['global']['site_name'],
-			'models' => self::$models
+			'models' => self::$models,
+			'abs_url' => $model->getAbsUrl()
 		];
+		if ((new Request())->method == 'POST'){
+			if (isset($_POST['_delete'])){
+				$model->delete(['id' => $_POST['_delete']]);
+				$redirect = $model->getAbsUrl();
+				Response::redirect($redirect);
+			}
+		}
+		$view = new View(__DIR__ . '/tmp');
 		$view->render('templates/chunks/list_views.html.twig', $context);
 	}
 
@@ -73,38 +90,101 @@ class Admin extends Model
 	{
 		$model = self::getModel($_SERVER['REQUEST_URI']);
 		self::$meta = self::$models[explode('/', $_SERVER['REQUEST_URI'])[2]]['meta'];
-
+		foreach (self::$model->getTableScheme() as $item => $value){
+			self::$model_scheme[$value['Field']] = $value;
+		}
 		$request = new Request();
+
 		if (strtoupper($request->method) === 'GET'){
 			if ($request->GET('id')){
 				$id = $request->GET('id');
 			}
 		}
-//		$form = Form::renderForm(
-//			$model->getOr404(['id'=>$id]),
-//			self::$meta['fieldset']['widgets'],
-//			self::$meta['fieldset']['data'],
-//			['action'=>'/', 'method'=>'POST']
-//			);
+		$id = (!$id) ? $request->GET('id') : $id;
+		$form = Form::buildForm(
+			$model->getOr404(['id'=>$id]),
+			self::$meta['fieldset']['widgets'],
+			self::$meta['fieldset']['data']
+		);
+		if (strtoupper($request->method) === 'POST'){
+			Form::validate($_POST);
+			if (is_array($model->getOr404(['id'=>$id]))){
+				$up_data = [];
+				foreach ($model->getOr404(['id'=>$id]) as $field => $val){
+					$up_data[$field] = (isset($_POST[$field])) ? $_POST[$field] : $val;
+				}
+
+				$model->update($up_data)->filter(['id__exact'=>$id])->execute();
+				Form::save();
+
+			} else {
+				throw new Exception('Запись с указанным идентификатором отсутствует в базе данных');die;
+			}
+		}
 		$fieldset = [];
-		foreach (array_keys(static::$model->getOr404(['id'=>$id])) as $key){
+		foreach (array_keys($model->getOr404(['id'=>$id])) as $key){
 			$fieldset[$key] = $key;
 		}
+
 		$context = [
-			'fieldset' => (isset(self::$meta['fieldset']))? self::$meta['fieldset']['data'] : $fieldset,
-			'widgets' => (isset(self::$meta['fieldset']['widgets']))? : [],
-			'dataset'=>$model->getOr404(['id'=>$id]),
+			'widgets' => (isset(self::$meta['fieldset']['widgets']))? self::$meta['fieldset']['widgets']: [],
 			'site_name' => Config::getSettings()['global']['site_name'],
 			'models' => (isset(self::$models)) ? self::$models : [],
-			'filter' => Form::selectMultipleField('Категории', [1=>'Moda',2=>'News',3=>'Cat3',4=>'Cat4',5=>'Cat5'], [3=>'Cat3'])
+			'form' => $form,
+//			'message' => 'Спасибо, все работает как нужно',
+			'abs_url' => $model->getAbsUrl()
 		];
 		$view = new View(__DIR__ . '/tmp');
 		$view->render('templates/chunks/detail_view.html.twig', $context);
 	}
 
+	public static function createItem()
+	{
+		$model = self::getModel($_SERVER['REQUEST_URI']);
+		self::$meta = self::$models[explode('/', $_SERVER['REQUEST_URI'])[2]]['meta'];
+		foreach (self::$model->getTableScheme() as $item => $value){
+			self::$model_scheme[$value['Field']] = $value;
+		}
+
+		$request = new Request();
+		$fields = [];
+		foreach (self::$model_scheme as $field => $value){
+			if ($field == 'id') {
+				continue;
+			}
+			$fields[$field] = '';
+		}
+		if ($model instanceof UserModel){
+			self::$meta['fieldset']['data']['Статус']['Пароль'] = 'password';
+		}
+
+		$form = Form::buildForm(
+			$fields,
+			self::$meta['fieldset']['widgets'],
+			self::$meta['fieldset']['data']
+			);
+//		var_dump($form);die;
+		if ($request->method == 'POST'){
+			Form::validate($_POST);
+			$model->insert($_POST)->execute();
+		}
+		$context = [
+			'widgets' => (isset(self::$meta['fieldset']['widgets']))? self::$meta['fieldset']['widgets']: [],
+			'site_name' => Config::getSettings()['global']['site_name'],
+			'models' => (isset(self::$models)) ? self::$models : [],
+			'form' => $form,
+//			'message' => 'Спасибо, все работает как нужно',
+			'abs_url' => $model->getAbsUrl()
+		];
+		$view = new View(__DIR__ . '/tmp');
+		$view->render('templates/chunks/detail_view.html.twig', $context);
+
+	}
+
 	public static function getModel($request)
 	{
-		$model = self::$models[explode('/', $request)[2]]['model'];
+		$model = (isset(self::$models[explode('/', $request)[2]]['model'])) ?
+			self::$models[explode('/', $request)[2]]['model'] : (new Response())->return_404();
 		if (class_exists($model)){
 			self::$model = new $model;
 		} else {
@@ -134,17 +214,21 @@ class Admin extends Model
 			'fieldset' => [
 				'data' => [],
 				'widgets' => [
-					'numberFields' => [],
-					'dateFields' => [],
-					'textAreaFields' => [],
-					'selectFields' => [],
-					'checkboxFields' => [],
-					'radioFields' => [],
-					'emailFields' => [],
-					'passwordFields' => [],
-					'urlFields' => [],
-					'fileFields' => [],
-					'hiddenFields' => [],
+					'number' => [],     // HTML5 number field
+					'datetype' => [],   // Date field
+					'textarea' => [],   // Text Area
+					'select' => [],     // Select field
+					'select_mul' => [], // Select multiple widget
+					'checkbox' => [],   // Checkbox field
+					'radio' => [],      // Radio fields
+					'email' => [],      // HTML5 Email field
+					'password' => [],   // Password field (****)
+					'url' => [],        // HTML5 URL field
+					'file' => [],       // File field
+					'hidden' => [],     // Hidden field
+					'switch' => [],     // Switch widget
+					'filter' => [],     // Widget for many-to-many models
+					'autoslug' => [],   // Field auto generate slug, most two field, example: ['field_name' => 'field_slug']
 				],
 			],
 			'app_meta' => [

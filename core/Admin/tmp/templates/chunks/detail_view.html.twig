@@ -2,72 +2,125 @@
 
 {% block content %}
     <div class="row">
-        <form class="col s12" method="post">
-            {{ filter|raw }}
-            {% for name, array in fieldset %}
+
+        {% if message %}
+            <div class="messages">
+                {{ message }}
+            </div>
+        {% endif %}
+        <form enctype="multipart/form-data" class="col s12" method="post">
+            {% for group, array in form %}
             <ul class="collapsible popout" data-collapsible="accordion">
                 <li class="active">
-                    <div class="collapsible-header active"><i class="material-icons">arrow_drop_down_circle</i>{{ name }}</div>
+                    <div class="collapsible-header active">
+                        <i class="material-icons">arrow_drop_down_circle</i>
+                        {{ group }}
+                    </div>
                     <div class="collapsible-body">
                         <div class="section form_fieldset">
-                        {% for field_name, field_val  in array %}
-                            {% set field_type = '' %}
-                            {% if field_val in widgets %}
-                                {% for key, val in widgets %}
-                                    {% if field_val == val %}
-                                        {% if key == 'number' %}
-                                            {% set field_input = '<input id="' ~ field_val~'" type="number"
-                                           value="' ~ dataset[field_val] ~ '" class="validate">' %}
-                                        {% elseif key == 'datatype' %}
-                                            {% set field_input = '<input id="' ~ field_val~'" type="date"
-                                           value="' ~ dataset[field_val] ~ '" class="datepicker">' %}
-                                        {% elseif key == 'textarea' %}
-                                            {% set field_input = '<textarea id="' ~ field_val~'" value="'
-                                            ~ dataset[field_val] ~ '" class="materialize-textarea"></textarea>' %}
-                                        {% elseif key == 'select' %}
-                                            {% set field_input = '<select id="' ~ field_val~'">
-                                    <option value="' ~ dataset[field_val] ~ '" selected>' ~ dataset[field_val] ~ '</option>
-                                    </select>' %}
-                                        {% else %}
-                                            {% set field_input = '<input id="' ~ field_val~'" type="text"
-                                           value="' ~ dataset[field_val] ~ '" class="validate" required>' %}
-                                        {% endif %}
+                            {% set count = 1 %}
+                            {% for data in array %}
+                            {% set flag = 'true' %}
+                            {% if data.type == 'hidden' %}
+                                {{ data.field|raw }}
+                                {% else %}
+                                {% if count is odd and flag == 'true' %}
+                                    {% if data.type == 'textarea' or data.type == 'radio' or data.type == 'select'
+                                            or data.type == 'select_mul' or data.type == 'file' or data.type == 'switch' %}
+                                        <div class="row">
+                                            {% if data.type == 'radio' or data.type == 'select' or data.type == 'select_mul' %}
+                                                <div class="input-field block-select">
+                                                    <div class="col s4"><strong>{{ data.placeholder }} :</strong></div>
+                                                    <div class="col s8">{{ data.field|raw }}</div>
+                                            {% elseif data.type == 'file' %}
+                                                    <div class="input-field file-field block-select">
+                                                        <div class="col s4">
+                                                            <div class="col s6"><strong>{{ data.placeholder }} :</strong></div>
+                                                            <div class="col s6"><strong>Тут картинка :</strong></div>
+                                                        </div>
+                                                        <div class="col s8">{{ data.field|raw }}</div>
+                                            {% elseif data.type == 'switch' %}
+                                                    <div class="block-select">
+                                                        <div class="col s4">
+                                                            <strong>{{ data.placeholder }} :</strong>
+                                                        </div>
+                                                        <div class="col s8">{{ data.field|raw }}</div>
+                                            {% else %}
+                                                <div class="input-field col s12">
+                                                    {{ data.field|raw }}
+                                            {% endif %}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="row">
+                                            <div class="input-field col s6">
+                                                {{ data.field|raw }}
+                                            </div>
+                                            {% set count = count + 1 %}
+                                            {% set flag = 'false' %}
                                     {% endif %}
-                                {% endfor %}
-                            {% else %}
-                                {% set field_input = '<input id="' ~ field_val~'" type="text"
-                                           value="' ~ dataset[field_val] ~ '" class="validate">' %}
-                            {% endif %}
-                            {% if loop.index is odd %}
-                                <div class="row">
-                                <div class="input-field col s6">
-                                <i class="material-icons prefix tooltipped"
-                                   data-position="bottom" data-delay="50"
-                                   data-tooltip="Поле не можетбыть пустым">info_outline</i>
-                                {% if field_val in dataset|keys %}
-                                    {{ field_input|raw }}
-                                    <label for="{{ field_val }}">{{ field_name }}</label>
+                                {% endif %}
+                                {% if count is even and flag == 'true' %}
+                                    {% if data.type == 'textarea' or data.type == 'radio' or data.type == 'select'
+                                            or data.type == 'select_mul' or data.type == 'file' or data.type == 'switch' %}
+                                        </div>
+                                        <div class="row">
+                                            {% if data.type == 'radio' or data.type == 'select' or data.type == 'select_mul' %}
+                                                <div class="input-field block-select">
+                                                    <div class="col s4">
+                                                        <strong>{{ data.placeholder }} :</strong></div>
+                                                    <div class="col s8">{{ data.field|raw }}</div>
+                                            {% elseif data.type == 'file' %}
+                                                 <div class="input-field file-field block-select">
+                                                     <div class="col s4">
+                                                         <div class="col s6"><strong>{{ data.placeholder }} :</strong></div>
+                                                         <div class="col s6"><strong>Тут картинка :</strong></div>
+                                                     </div>
+                                                     <div class="col s8">{{ data.field|raw }}</div>
+                                            {% elseif data.type == 'switch' %}
+                                                 <div class="block-select">
+                                                     <div class="col s4">
+                                                         <strong>{{ data.placeholder }} :</strong>
+                                                     </div>
+                                                     <div class="col s8">{{ data.field|raw }}</div>
+                                            {% else %}
+                                                <div class="input-field col s12">
+                                                    {{ data.field|raw }}
+                                            {% endif %}
+                                            </div>
+                                        </div>
+                                        {% set count = count + 1 %}
+                                    {% else %}
+                                        <div class="input-field col s6">
+                                            {{ data.field|raw }}
+                                        </div>
+                                    </div>
+                                    {% set count = count + 1 %}
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
-                            {% if loop.index is even %}
-                                </div>
-                                <div class="input-field col s6">
-                                    <i class="material-icons prefix tooltipped"
-                                       data-position="bottom" data-delay="50"
-                                       data-tooltip="Поле не можетбыть пустым">info_outline</i>
-                                    {% if field_val in dataset|keys %}
-                                        {{ field_input|raw }}
-                                        <label for="{{ field_val }}">{{ field_name }}</label>
-                                    {% endif %}
-                                </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
+                            {% endfor %}
                         </div>
                     </div>
                 </li>
             </ul>
             {% endfor %}
+            <div class="fixed-action-btn hide-on-med-and-down" style="top: 70px; right: 20px;">
+                <div class="center"><button type="submit" class="waves-effect waves-light btn" name="_save">
+                        <i class="material-icons right">check_box</i>Сохранить</button></div>
+                <div class="center"><button type="submit" class="waves-effect waves-light btn" name="_save_exit">
+                        <i class="material-icons right">exit_to_app</i>Сохранить</button></div>
+                <div class="center"><a class="waves-effect waves-light btn red" href="{{ abs_url }}">
+                        <i class="material-icons right">exit_to_app</i>В каталог</a></div>
+            </div>
+            <div class="fixed-action-btn hide-on-large-only" style="top: 70px; left: 20px;">
+                <div class="center"><button type="submit" class="waves-effect waves-light btn" name="_save">
+                        <i class="material-icons right">check_box</i>Сохранить</button></div>
+                <div class="center"><button type="submit" class="waves-effect waves-light btn" name="_save_exit">
+                        <i class="material-icons right">exit_to_app</i>Сохранить</button></div>
+                <div class="center"><a class="waves-effect waves-light btn red" href="{{ abs_url }}">
+                        <i class="material-icons right">exit_to_app</i>В каталог</a></div>
+            </div>
         </form>
     </div>
 {% endblock %}

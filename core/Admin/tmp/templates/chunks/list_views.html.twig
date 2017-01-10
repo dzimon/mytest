@@ -2,29 +2,65 @@
 
 {% block content %}
     <table class="responsive-table highlight centered">
-        <thead>
-        <tr>
-            {% for name, value in table %}
-                <th data-field="{{ name }}">{{ name }}</th>
-            {% endfor %}
-        </tr>
-        </thead>
-
-        <tbody>
+        {% if dataset|length >= 1 %}
+            <thead>
+                <tr>
+                    {% for name, value in table %}
+                        <th data-field="{{ value }}">{{ name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
             {% for data in dataset %}
                 <tr>
-                {% for key, value in data %}
-                    {% if key in table %}
-                        {% if key == meta.link %}
-                            <td><a href="{{ data.id }}/">{{ value }}</a></td>
-                            {% else %}
-                                <td>{{ value }}</td>
+                    {% for k, v in table %}
+                        {% if v  == meta.link %}
+                            <td><a href="{{ data.id }}/">{{ data[v] }}</a></td>
+                        {% else %}
+                            <td>{{ data[v] }}</td>
                         {% endif %}
-
-                    {% endif %}
-                {% endfor %}
+                    {% endfor %}
+                    <td>
+                        <a class="btn btn-floating cyan" href="{{ abs_url }}{{ data.id }}/">
+                            <i class="material-icons white-text">mode_edit</i>
+                        </a>
+                    </td>
+                    <td>
+                        <form method="post" id="delete">
+                            <input type="hidden" value="{{ data.id }}" name="_delete">
+                            <button type="submit" class="btn btn-floating red">
+                                <i class="material-icons white-text">delete_forever</i>
+                            </button>
+                        </form>
+                    </td>
                 </tr>
             {% endfor %}
+            <div class="fixed-action-btn hide-on-med-and-down" style="top: 70px; right: 20px;">
+                <div class="center">
+                    <a href="{{ abs_url }}add/" class="waves-effect waves-light btn">
+                        <i class="material-icons right">check_box</i>Добавить
+                    </a>
+                </div>
+            </div>
+            <div class="fixed-action-btn hide-on-large-only" style="top: 70px; left: 20px;">
+                <div class="center">
+                    <a href="{{ abs_url }}add/" class="waves-effect waves-light btn">
+                        <i class="material-icons right">check_box</i>Добавить
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <tr>
+                <div class="center">
+                    <h5>Данных еще нет, добавьте вашу первую запись:</h5>
+                </div>
+            </tr>
+            <tr>
+                <div class="center">
+                    <a href="{{ abs_url }}add/" class="waves-effect waves-light btn">Добавить</a>
+                </div>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
 {% endblock %}

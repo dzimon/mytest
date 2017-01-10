@@ -10,10 +10,12 @@ class Config
 	public static $schema;         // URL schema
 	public static $db = [];        // DB settings
 	public static $urls = [];      // urls settings
+	public static $admin_url = '';
 
 
 	public static function init()
 	{
+		self::setSchema($_SERVER['HTTP_X_FORWARDED_PROTO']);
 		if (!defined('DS')){define('DS', DIRECTORY_SEPARATOR);}
 		if (!defined('BASE_DIR')){define('BASE_DIR', dirname(__DIR__));}
 		if (!defined('APP_DIR')){define('APP_DIR', dirname(__DIR__) . DS . 'app');}
@@ -86,7 +88,12 @@ class Config
 	 */
 	public static function setSchema($schema)
 	{
-		self::$schema = $schema;
+		if ($schema === 'https'){
+			$_SERVER['SERVER_PORT'] = '443';
+			self::$schema = 'https';
+		} else {
+			self::$schema = 'http';
+		}
 	}
 
 	/**

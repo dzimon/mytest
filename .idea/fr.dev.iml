@@ -27,18 +27,14 @@
     <orderEntry type="module-library">
       <library name="PHARS">
         <CLASSES>
-          <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/pharcommand.phar/" />
-          <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/PEAR/go-pear.phar/" />
           <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/composer.phar/" />
-          <root url="phar://$MODULE_DIR$/vendor/twig/twig/test/Twig/Tests/Loader/Fixtures/phar/phar-sample.phar/" />
-          <root url="phar://$MODULE_DIR$/vendor/composer/composer.phar/" />
+          <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/PEAR/go-pear.phar/" />
+          <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/pharcommand.phar/" />
         </CLASSES>
         <SOURCES>
-          <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/pharcommand.phar/" />
-          <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/PEAR/go-pear.phar/" />
           <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/composer.phar/" />
-          <root url="phar://$MODULE_DIR$/vendor/twig/twig/test/Twig/Tests/Loader/Fixtures/phar/phar-sample.phar/" />
-          <root url="phar://$MODULE_DIR$/vendor/composer/composer.phar/" />
+          <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/PEAR/go-pear.phar/" />
+          <root url="phar://$MODULE_DIR$/../../modules/php/PHP-7-x64/pharcommand.phar/" />
         </SOURCES>
       </library>
     </orderEntry>

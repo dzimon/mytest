@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf8">
+    <!--Import Google Icon Font-->
+    <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="/core/Admin/tmp/styles/materialize/css/materialize.min.css"
+          media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="/core/Admin/tmp/styles/css/style.css" media="screen,projection"/>
+
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/core/Admin/tmp/styles/images/favicon.ico" type="image/x-icon">
+</head>
+
+<header>
+    <div class="navbar-fixed">
+        <nav class="light-blue darken-2">
+            <div class="nav-wrapper">
+                <a href="/admin/" class="brand-logo">{{ site_name }}</a>
+                <a href="#" data-activates="side-nav" class="button-collapse">
+                    <i class="material-icons">menu</i>
+                </a>
+                <ul class="right hide-on-med-and-down">
+                    <li><a href="/"><i class="material-icons">more_vert</i></a></li>
+                    <li><a href="/"><i class="material-icons">repeat_one</i></a></li>
+                    <li><a href="/"><i class="material-icons">comment</i></a></li>
+
+                    <li><a href="/"><i class="material-icons calendar">today</i></a></li>
+                    <li><a href="/"><i class="material-icons">info</i></a></li>
+                    <li><a href="/"><i class="material-icons">refresh</i></a></li>
+                    <li><a href="/"><i class="material-icons">notifications_none</i></a></li>
+
+                </ul>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <div class="wrapper">
+
+        <!-- include Sidebar -->
+        {% include 'templates/include/sidebar.twig' %}
+
+        <div class="container">
+            {% block content %}
+
+            {% endblock %}
+        </div>
+    </div>
+</main>
+
+<footer class="page-footer light-blue darken-2">
+
+    <div class="container">
+        © 2014 Copyright Text
+        <a class="grey-text text-lighten-4 right" href="#!">More Links</a>
+    </div>
+
+</footer>
+
+<!--Import jQuery before materialize.js-->
+<script type="text/javascript" src="/core/Admin/tmp/styles/js/jquery.min.js"></script>
+<script type="text/javascript" src="/core/Admin/tmp/styles/materialize/js/materialize.min.js"></script>
+<script src='//cdn.tinymce.com/4/tinymce.min.js'></script>
+<script type="text/javascript" src="/core/Admin/tmp/styles/js/multiselect.min.js"></script>
+<script>
+    tinymce.init({
+        selector: 'textarea',
+        theme: 'modern',
+//        language: 'ru',
+        min_width: 200,
+        min_height: 150,
+        plugins: [
+            'advlist autolink link image lists charmap print preview hr anchor pagebreak spellchecker',
+            'searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking',
+            'save table contextmenu directionality emoticons template paste textcolor colorpicker'
+        ],
+//        content_css: 'css/content.css',
+        toolbar: 'insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | print preview media fullpage | forecolor backcolor emoticons'
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        $(".button-collapse").sideNav();
+        $('select').material_select();
+        $('.datepicker').pickadate({
+            selectMonths: true, // Creates a dropdown to control month
+            selectYears: 15 // Creates a dropdown of 15 years to control year
+        });
+        $('input, textarea').characterCounter();
+        $('#search').multiselect({
+            search: {
+                left: '<input type="text" name="q" class="select-filter" placeholder="Найти..." />',
+                right: '<input type="text" name="q" class="select-filter" placeholder="Найти..." />',
+            }
+        });
+        var $toastContent = $('.messages');
+        Materialize.toast($toastContent, 5000, 'rounded');
+    });
+</script>
+{% if widgets.autoslug %}
+<script type="text/javascript" src="/core/Admin/tmp/styles/js/speakingurl.min.js"></script>
+<script>
+    {% for input, output in widgets.autoslug %}
+        $("#{{ input }}").keyup(function() {
+            var data = $("#{{ input }}").val();
+            var output = getSlug(data);
+            $("#{{ output }}").val(output);
+        });
+    {% endfor %}
+</script>
+{% endif %}
+
+</body>
+</html>
